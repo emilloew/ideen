@@ -13,13 +13,22 @@
 </head>
 <body>
 <main>
+<form id="login" hidden>
 <h1>Ideen<span>werkstatt</span></h1>
+<input type="text" id="em" placeholder="E-Mail" autocomplete="username" inputmode="email" autocapitalize="none">
+<input type="password" id="pw" placeholder="Passwort" autocomplete="current-password" style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);font:inherit;color:inherit">
+<div class="err" id="err"></div>
+<button class="btn" type="submit">Anmelden</button>
+</form>
+<div id="app" hidden>
+<div class="hd"><h1>Ideen<span>werkstatt</span></h1><button class="out" id="out">Abmelden</button></div>
 <div class="add"><input type="text" id="q" placeholder="Neue Idee…" autocomplete="off"><button class="btn" id="go">+</button></div>
 <input type="search" id="s" placeholder="Suchen (Name, Material, Tag…)" style="margin-bottom:8px">
 <div class="chips" id="sf"></div>
 <div id="list"></div>
-<div style="display:flex;gap:8px;margin-top:28px;flex-wrap:wrap"><button class="chip" id="ex">Sicherung speichern</button><button class="chip" id="im">Sicherung laden</button><input type="file" id="fi" accept=".json" hidden></div>
+<div style="margin-top:28px"><button class="chip" id="ex">Sicherung speichern</button></div>
+</div>
 </main>
-<script src="script.js"></script>
+<script type="module" src="script.js"></script>
 </body>
 </html>

@@ -33,3 +33,9 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--acc);outline-off
 .del{justify-self:end;background:none;border:0;color:#c0392b;cursor:pointer;font-size:14px}
 .empty{text-align:center;color:var(--mute);padding:30px 10px}
 .newcat{display:flex;gap:8px;margin-top:-4px}.newcat .btn{padding:0 14px;white-space:nowrap}
+.hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.hd h1{margin:4px 0}
+.out{background:none;border:1.5px solid var(--line);border-radius:99px;padding:4px 12px;font-size:13px;color:var(--mute);cursor:pointer}
+#login{max-width:360px;margin:12vh auto 0;display:grid;gap:10px}
+#login .btn{padding:11px}
+.err{color:#c0392b;font-size:14px;min-height:20px}
+[hidden]{display:none!important}
