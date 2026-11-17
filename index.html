@@ -9,25 +9,53 @@
 <meta name="theme-color" content="#1f7a4d">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E🎸%3C/text%3E%3C/svg%3E">
 <title>Ideenwerkstatt</title>
+<script>try{var t=JSON.parse(localStorage.getItem("iw-theme")||"{}"),r=document.documentElement;r.dataset.mode=t.mode||"auto";r.dataset.accent=t.accent||"green"}catch(e){}</script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <main>
-<form id="login" hidden>
-<h1>Ideen<span>werkstatt</span></h1>
-<input type="text" id="em" placeholder="E-Mail" autocomplete="username" inputmode="email" autocapitalize="none">
-<input type="password" id="pw" placeholder="Passwort" autocomplete="current-password" style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);font:inherit;color:inherit">
-<div class="err" id="err"></div>
-<button class="btn" type="submit">Anmelden</button>
+
+<form id="login" class="login" hidden>
+  <h1>Ideenwerkstatt</h1>
+  <input type="text" id="em" placeholder="E-Mail" autocomplete="username" inputmode="email" autocapitalize="none">
+  <input type="password" id="pw" placeholder="Passwort" autocomplete="current-password">
+  <div class="err" id="err"></div>
+  <button class="btn" type="submit">Anmelden</button>
 </form>
+
 <div id="app" hidden>
-<div class="hd"><h1>Ideen<span>werkstatt</span></h1><button class="out" id="out">Abmelden</button></div>
-<div class="add"><input type="text" id="q" placeholder="Neue Idee…" autocomplete="off"><button class="btn" id="go">+</button></div>
-<input type="search" id="s" placeholder="Suchen (Name, Material, Tag…)" style="margin-bottom:8px">
-<div class="chips" id="sf"></div>
-<div id="list"></div>
-<div style="margin-top:28px"><button class="chip" id="ex">Sicherung speichern</button></div>
+  <header class="hd">
+    <h1>Ideenwerkstatt</h1>
+    <div class="hd-actions">
+      <button class="btn ghost small" id="themeBtn" aria-label="Design ändern">Design</button>
+      <button class="btn ghost small" id="out">Abmelden</button>
+    </div>
+  </header>
+
+  <section class="panel" id="panel" hidden>
+    <div class="panel-row"><span class="lbl">Modus</span><div class="seg" id="modeSeg"></div></div>
+    <div class="panel-row"><span class="lbl">Farbe</span><div class="swatches" id="accSeg"></div></div>
+  </section>
+
+  <div class="row">
+    <input type="text" id="q" placeholder="Neue Idee…" autocomplete="off">
+    <button class="btn" id="go" aria-label="Idee hinzufügen">+</button>
+  </div>
+  <div class="row">
+    <input type="text" id="nc" placeholder="Neue Kategorie…" autocomplete="off">
+    <button class="btn ghost" id="addcat">Anlegen</button>
+  </div>
+  <div class="note" id="note"></div>
+
+  <div class="row filters">
+    <input type="search" id="s" placeholder="Suchen…">
+    <select id="fc" aria-label="Nach Kategorie filtern"></select>
+  </div>
+  <div class="chips" id="sf"></div>
+
+  <div id="list"></div>
 </div>
+
 </main>
 <script type="module" src="script.js"></script>
 </body>

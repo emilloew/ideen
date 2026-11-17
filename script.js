@@ -14,7 +14,7 @@ const app=initializeApp(firebaseConfig),auth=getAuth(app);
 let db;try{db=initializeFirestore(app,{localCache:persistentLocalCache()})}catch(e){db=getFirestore(app)}
 
 const ST=["Nicht begonnen","In Bearbeitung","Fertig"],NOCAT="Ohne Kategorie";
-let ideas=[],cats=[],fs=-1,open={},unsubs=[];
+let ideas=[],cats=[],fs=-1,fc="",open={},unsubs=[],filterHtml="";
 const $=id=>document.getElementById(id);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const esc=t=>String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -23,6 +23,25 @@ const strip=i=>({id:i.id,title:i.title,desc:i.desc||"",status:i.status||0,cat:i.
 const saveIdea=i=>setDoc(doc(db,"ideas",i.id),strip(i)).catch(()=>alert("Speichern fehlgeschlagen. Bist du online?"));
 const saveCats=()=>setDoc(doc(db,"meta","cats"),{list:cats}).catch(()=>{});
 function allCats(){const c=cats.slice();ideas.forEach(i=>{if(i.cat&&c.indexOf(i.cat)<0)c.push(i.cat)});return c.sort((a,b)=>a.localeCompare(b,"de"))}
+
+/* ---------- Design (Modus + Farbe) ---------- */
+const MODES=[["auto","Auto"],["light","Hell"],["dark","Dunkel"]];
+const ACCENTS=[["green","Grün","#1f7a4d"],["blue","Blau","#2f6fdb"],["violet","Violett","#6d4ad8"],["orange","Orange","#c2570c"],["rose","Rosa","#c2335f"],["gray","Grau","#4b5563"]];
+let theme={mode:"auto",accent:"green"};
+try{Object.assign(theme,JSON.parse(localStorage.getItem("iw-theme")||"{}"))}catch(e){}
+function applyTheme(){
+  document.documentElement.dataset.mode=theme.mode;
+  document.documentElement.dataset.accent=theme.accent;
+  try{localStorage.setItem("iw-theme",JSON.stringify(theme))}catch(e){}
+  $("modeSeg").innerHTML=MODES.map(m=>'<button data-mode="'+m[0]+'" class="'+(theme.mode===m[0]?'on':'')+'">'+m[1]+'</button>').join("");
+  $("accSeg").innerHTML=ACCENTS.map(a=>'<button class="sw'+(theme.accent===a[0]?' on':'')+'" style="--c:'+a[2]+'" data-accent="'+a[0]+'" aria-label="'+a[1]+'"></button>').join("");
+}
+$("themeBtn").onclick=()=>{$("panel").hidden=!$("panel").hidden};
+$("panel").addEventListener("click",e=>{
+  if(e.target.dataset.mode){theme.mode=e.target.dataset.mode;applyTheme()}
+  else if(e.target.dataset.accent){theme.accent=e.target.dataset.accent;applyTheme()}
+});
+applyTheme();
 
 /* ---------- Login ---------- */
 $("login").addEventListener("submit",e=>{
@@ -41,28 +60,49 @@ onAuthStateChanged(auth,u=>{
   unsubs.push(onSnapshot(doc(db,"meta","cats"),s=>{cats=(s.exists()&&s.data().list)||[];if(!busy())render()},()=>{}));
 });
 
-/* ---------- Ideen ---------- */
+/* ---------- Ideen und Kategorien ---------- */
 function add(){
   const v=$("q").value.trim();if(!v)return;
-  const i={id:uid(),title:v,desc:"",status:0,cat:"",materials:"",tags:[],ts:Date.now()};
+  const i={id:uid(),title:v,desc:"",status:0,cat:(fc&&fc!=="__none")?fc:"",materials:"",tags:[],ts:Date.now()};
   ideas.unshift(i);open[i.id]=true;saveIdea(i);$("q").value="";render();
 }
+let noteTimer;
+function say(t){$("note").textContent=t;clearTimeout(noteTimer);noteTimer=setTimeout(()=>{$("note").textContent=""},2800)}
+function addCat(){
+  const n=$("nc").value.trim();if(!n)return;
+  const ex=allCats().find(c=>c.toLowerCase()===n.toLowerCase());
+  if(ex){say("„"+ex+"“ gibt es schon.")}
+  else{cats.push(n);saveCats();say("Kategorie „"+n+"“ angelegt.")}
+  $("nc").value="";render();
+}
 function busy(){const a=document.activeElement;return a&&$("list").contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)}
+
+function renderFilter(){
+  const cs=allCats();
+  if(fc&&fc!=="__none"&&cs.indexOf(fc)<0)fc="";
+  const html='<option value="">Alle Kategorien</option>'+cs.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join("")+'<option value="__none">'+NOCAT+'</option>';
+  if(html!==filterHtml){filterHtml=html;$("fc").innerHTML=html}
+  $("fc").value=fc;
+}
 function render(){
+  renderFilter();
   const q=$("s").value.toLowerCase();
   $("sf").innerHTML=['<button class="chip'+(fs<0?' on':'')+'" data-s="-1">Alle</button>'].concat(ST.map((n,k)=>'<button class="chip'+(fs===k?' on':'')+'" data-s="'+k+'">'+n+'</button>')).join("");
-  const list=ideas.filter(i=>(fs<0||i.status===fs)&&(!q||[i.title,i.desc,i.materials,i.cat,(i.tags||[]).join(" ")].join(" ").toLowerCase().indexOf(q)>=0));
+  const list=ideas.filter(i=>
+    (fs<0||i.status===fs)&&
+    (fc===""||(fc==="__none"?!i.cat:i.cat===fc))&&
+    (!q||[i.title,i.desc,i.materials,i.cat,(i.tags||[]).join(" ")].join(" ").toLowerCase().indexOf(q)>=0));
   if(!list.length){$("list").innerHTML='<div class="empty">'+(ideas.length?'Nichts gefunden.':'Noch keine Ideen. Die erste kommt oben rein.')+'</div>';return}
   const groups={};list.forEach(i=>{const k=i.cat||NOCAT;(groups[k]=groups[k]||[]).push(i)});
   const keys=Object.keys(groups).sort((a,b)=>a===NOCAT?1:b===NOCAT?-1:a.localeCompare(b,"de"));
-  $("list").innerHTML=keys.map(k=>'<h2><span>'+esc(k)+'</span><span>'+groups[k].length+'</span></h2>'+groups[k].sort((a,b)=>a.status-b.status||b.ts-a.ts).map(card).join("")).join("");
+  $("list").innerHTML=keys.map(k=>'<h2 class="grp"><span>'+esc(k)+'</span><span>'+groups[k].length+'</span></h2>'+groups[k].sort((a,b)=>a.status-b.status||b.ts-a.ts).map(card).join("")).join("");
 }
 function card(i){
   const o=open[i.id];
   let h='<div class="card s'+i.status+'" data-id="'+i.id+'"><div class="top"><div class="ttl">'+esc(i.title)+'</div><span class="st">'+ST[i.status]+'</span></div>';
   if(!o){
     if(i.desc)h+='<div class="meta">'+esc(i.desc.length>110?i.desc.slice(0,110)+"…":i.desc)+'</div>';
-    if(i.materials)h+='<div class="meta">🔧 '+esc(i.materials.replace(/\n/g,", "))+'</div>';
+    if(i.materials)h+='<div class="meta">Material: '+esc(i.materials.replace(/\n/g,", "))+'</div>';
     if((i.tags||[]).length)h+='<div class="tags">'+i.tags.map(t=>'<span class="tag">#'+esc(t)+'</span>').join("")+'</div>';
   }else{
     const opts='<option value="">'+NOCAT+'</option>'+allCats().map(c=>'<option'+(c===i.cat?' selected':'')+' value="'+esc(c)+'">'+esc(c)+'</option>').join("");
@@ -70,18 +110,11 @@ function card(i){
     +'<label>Beschreibung<textarea data-f="desc">'+esc(i.desc)+'</textarea></label>'
     +'<label>Status</label><div class="seg" style="margin-top:-6px">'+ST.map((n,k)=>'<button data-act="set" data-v="'+k+'" class="'+(i.status===k?'on':'')+'">'+n+'</button>').join("")+'</div>'
     +'<label>Kategorie<select data-f="cat">'+opts+'</select></label>'
-    +'<div class="newcat"><input type="text" id="nc-'+i.id+'" placeholder="Neue Kategorie anlegen…" autocomplete="off"><button class="btn" data-act="addcat">Anlegen</button></div>'
     +'<label>Materialien (eins pro Zeile)<textarea data-f="materials">'+esc(i.materials)+'</textarea></label>'
     +'<label>Tags (mit Komma)<input type="text" data-f="tags" value="'+esc((i.tags||[]).join(", "))+'"></label>'
     +'<button class="del" data-act="del">Löschen</button></div>';
   }
   return h+'</div>';
-}
-function newCat(i){
-  const el=$("nc-"+i.id);let n=el?el.value.trim():"";if(!n)return;
-  const ex=allCats().find(c=>c.toLowerCase()===n.toLowerCase());
-  if(ex)n=ex;else{cats.push(n);saveCats()}
-  i.cat=n;saveIdea(i);render();
 }
 document.addEventListener("click",e=>{
   const c=e.target.closest(".chip");
@@ -90,13 +123,8 @@ document.addEventListener("click",e=>{
   const i=find(card.dataset.id);if(!i)return;
   const a=e.target.dataset.act;
   if(a==="set"){i.status=+e.target.dataset.v;saveIdea(i);render()}
-  else if(a==="addcat")newCat(i);
   else if(a==="del"){if(confirm("Idee wirklich löschen?")){ideas=ideas.filter(x=>x!==i);deleteDoc(doc(db,"ideas",i.id)).catch(()=>{});render()}}
   else if(e.target.classList.contains("ttl")){open[i.id]=!open[i.id];render()}
-});
-document.addEventListener("keydown",e=>{
-  if(e.key!=="Enter"||!e.target.id||e.target.id.indexOf("nc-")!==0)return;
-  const i=find(e.target.id.slice(3));if(i){e.preventDefault();newCat(i)}
 });
 document.addEventListener("change",e=>{
   const f=e.target.dataset.f,card=e.target.closest(".card");if(!f||!card)return;
@@ -108,5 +136,7 @@ document.addEventListener("change",e=>{
 });
 $("go").onclick=add;
 $("q").addEventListener("keydown",e=>{if(e.key==="Enter")add()});
+$("addcat").onclick=addCat;
+$("nc").addEventListener("keydown",e=>{if(e.key==="Enter")addCat()});
 $("s").addEventListener("input",render);
-$("ex").onclick=()=>{const b=new Blob([JSON.stringify({ideas:ideas.map(strip),cats},null,1)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="ideen-sicherung.json";a.click()};
+$("fc").addEventListener("change",()=>{fc=$("fc").value;render()});
