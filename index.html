@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ideen">
+<meta name="theme-color" content="#1f7a4d">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E🎸%3C/text%3E%3C/svg%3E">
+<title>Ideenwerkstatt</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+<h1>Ideen<span>werkstatt</span></h1>
+<div class="add"><input type="text" id="q" placeholder="Neue Idee…" autocomplete="off"><button class="btn" id="go">+</button></div>
+<input type="search" id="s" placeholder="Suchen (Name, Material, Tag…)" style="margin-bottom:8px">
+<div class="chips" id="sf"></div>
+<div id="list"></div>
+<div style="display:flex;gap:8px;margin-top:28px;flex-wrap:wrap"><button class="chip" id="ex">Sicherung speichern</button><button class="chip" id="im">Sicherung laden</button><input type="file" id="fi" accept=".json" hidden></div>
+</main>
+<script src="script.js"></script>
+</body>
+</html>
